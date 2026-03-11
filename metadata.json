@@ -1,0 +1,5 @@
+{
+  "name": "Topic Trace",
+  "description": "A study planner and revision assistant for B.Tech students, featuring structured notes, reminders, quizzes, and performance tracking.",
+  "requestFramePermissions": []
+}
