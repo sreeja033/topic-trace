@@ -2,6 +2,17 @@ import { GoogleGenAI, Type, Modality } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+function parseGeminiJson(text: string) {
+  try {
+    // Remove markdown code block formatting if present
+    const cleanedText = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+    return JSON.parse(cleanedText);
+  } catch (e) {
+    console.error("Failed to parse JSON from Gemini:", text);
+    throw new Error('Invalid JSON response from AI');
+  }
+}
+
 export async function generateSubjectSyllabus(subjectName: string) {
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -42,7 +53,7 @@ export async function generateSubjectSyllabus(subjectName: string) {
 
   const text = response.text;
   if (!text) throw new Error('Failed to generate syllabus');
-  return JSON.parse(text) as {
+  return parseGeminiJson(text) as {
     topics: {
       id: string;
       title: string;
@@ -84,7 +95,7 @@ export async function generateSingleTopic(subjectName: string, topicTitle: strin
 
   const text = response.text;
   if (!text) throw new Error('Failed to generate topic');
-  return JSON.parse(text) as {
+  return parseGeminiJson(text) as {
     id: string;
     title: string;
     summary: string;
@@ -127,7 +138,7 @@ export async function generateQuiz(subjectName: string, topicTitle: string) {
 
   const text = response.text;
   if (!text) throw new Error('Failed to generate quiz');
-  return JSON.parse(text) as {
+  return parseGeminiJson(text) as {
     questions: {
       question: string;
       options: string[];
@@ -155,7 +166,7 @@ export async function askQuestionStream(subjectName: string, topicTitle: string,
     return response;
   } else {
     const response = await ai.models.generateContentStream({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: `You are an expert tutor for B.Tech students. 
       Context: Subject is "${subjectName}", Topic is "${topicTitle}".${contextString}
       Student asks: "${question}"
@@ -195,7 +206,7 @@ export async function askQuestion(subjectName: string, topicTitle: string, quest
     return answer;
   } else {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: `You are an expert tutor for B.Tech students. 
       Context: Subject is "${subjectName}", Topic is "${topicTitle}".
       Student asks: "${question}"
@@ -276,7 +287,7 @@ export async function generateFlashcards(subjectName: string, topicTitle: string
 
   const text = response.text;
   if (!text) throw new Error('Failed to generate flashcards');
-  return JSON.parse(text) as {
+  return parseGeminiJson(text) as {
     flashcards: {
       id: string;
       front: string;
@@ -324,7 +335,7 @@ export async function generateAudio(text: string) {
 
 export async function generateAnalogy(subjectName: string, topicTitle: string) {
   const response = await ai.models.generateContent({
-    model: 'gemini-3.1-pro-preview',
+    model: 'gemini-3-flash-preview',
     contents: `Explain the topic "${topicTitle}" in the subject "${subjectName}" using a highly creative, real-world analogy. Keep it under 3 paragraphs. Format in Markdown.`,
   });
   return response.text || 'Failed to generate analogy.';
@@ -332,7 +343,7 @@ export async function generateAnalogy(subjectName: string, topicTitle: string) {
 
 export async function roastAnswer(subjectName: string, topicTitle: string, studentAnswer: string) {
   const response = await ai.models.generateContent({
-    model: 'gemini-3.1-pro-preview',
+    model: 'gemini-3-flash-preview',
     contents: `You are a strict, sarcastic, but ultimately helpful B.Tech professor. 
     The subject is "${subjectName}" and the topic is "${topicTitle}".
     The student has provided the following answer/code:
@@ -345,7 +356,7 @@ export async function roastAnswer(subjectName: string, topicTitle: string, stude
 
 export async function generateMindMap(subjectName: string, topics: string[]) {
   const response = await ai.models.generateContent({
-    model: 'gemini-3.1-pro-preview',
+    model: 'gemini-3-flash-preview',
     contents: `Create a Mermaid.js mindmap (using 'mindmap' syntax) for the subject "${subjectName}" and its topics: ${topics.join(', ')}. 
     Include 2-3 sub-nodes for each topic representing key concepts.
     Return ONLY the raw Mermaid code block, without any markdown formatting like \`\`\`mermaid. Just the raw text starting with 'mindmap'.
